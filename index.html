@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Nightcore Engine | Pure Monochrome Glassmorphism</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.all.min.js"></script>
+    <style>
+        /* --- GLOBAL SETUP & RESPONSIVE IMAGE BACKGROUND ENGINE --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            /* Adaptive high-fidelity image background mapping configuration */
+            background-image: url("https://images.unsplash.com/photo-1589816816593-181ee1ab3a78?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            box-sizing: border-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        /* --- DYNAMIC RESPONSIVE STUDIO CARD --- */
+        .studio-container {
+            width: 92%;
+            max-width: 460px;
+            margin: 20px auto;
+            padding: 2.5rem 2rem;
+            border-radius: 24px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+            transition: box-shadow 0.5s ease;
+        }
+
+        /* Monochromatic pure white active glow */
+        .studio-container.playing-glow {
+            box-shadow: 0 0 35px rgba(255, 255, 255, 0.2), 0 20px 45px rgba(0, 0, 0, 0.35);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tagline {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 2rem;
+            letter-spacing: 0.2px;
+            line-height: 1.4;
+        }
+
+        /* --- CUSTOM FILE INTERFACE CAPSULE WITH INTENSIFIED WHITE HOVER GLOW --- */
+        .file-upload-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        .file-upload-btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        /* Fixed explicit white glow engine for both file states */
+        .file-upload-wrapper:hover .file-upload-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.8) !important;
+            color: #ffffff !important;
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+
+        #audioFile {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        /* Glass Bubble Display for Now Playing File */
+        .glass-bubble-display {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 1.5rem;
+            word-break: break-all;
+            display: inline-block;
+            max-width: 100%;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- STUDIO WORKSPACE INTERFACE --- */
+        .studio-workspace {
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .studio-workspace.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Timeline Scrub Elements */
+        .timeline-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .time-stamp {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            min-width: 38px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Fluid/Dynamic White Glass Sliders */
+        .glass-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            outline: none;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .glass-slider:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .glass-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            transition: transform 0.2s ease;
+        }
+
+        .glass-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        .glass-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: none;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .glass-slider::-moz-range-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        /* --- DSP PARAMETERS CONSOLE --- */
+        .modifier-rack {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.25rem 1.1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+        }
+
+        .control-value {
+            color: #ffffff;
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+        }
+
+        /* --- CONTROLS MAIN FRAME PANEL --- */
+        .controls-panel-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-circle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0;
+        }
+
+        .action-circle-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.06);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .action-circle-btn:active {
+            transform: scale(0.96);
+        }
+
+        .action-circle-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #ffffff;
+        }
+
+        /* --- MONOCHROME EXPORT ACTION BUTTON LAYOUT --- */
+        .export-buttons-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        .glass-btn {
+            width: 100%;
+            padding: 13px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 30px; 
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-btn:disabled {
+            background: rgba(255, 255, 255, 0.02) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            color: rgba(255, 255, 255, 0.3) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* --- CREDIT BADGE CAPSULE --- */
+        .credit-wrapper {
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .credit-bubble {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 0.78rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.3px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        /* Interactive pure white glow overlay strictly on hover context */
+        .credit-wrapper:hover .credit-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+        }
+
+        /* --- VISUAL VIEWPORT ADAPTABILITY SCALER --- */
+        @media (max-width: 400px) {
+            .studio-container {
+                padding: 1.75rem 1.25rem;
+                border-radius: 18px;
+            }
+            h1 { font-size: 1.75rem; }
+            .modifier-rack { padding: 1rem 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="studio-container" id="studioContainer">
+        <h1>Nexus Nightcore Engine</h1>
+        <span class="tagline">Import, Build, Relax!</span>
+
+        <div class="file-upload-wrapper">
+            <div class="file-upload-btn" id="uploadLabel">Choose Audio File</div>
+            <input type="file" id="audioFile" accept="audio/*">
+        </div>
+
+        <div id="trackBubbleWrapper" style="display: none;">
+            <div class="glass-bubble-display" id="trackName"></div>
+        </div>
+
+        <div class="studio-workspace" id="studioWorkspace">
+            
+            <div class="timeline-container">
+                <span class="time-stamp" id="currentTime">00:00</span>
+                <input type="range" id="seekBar" class="glass-slider" value="0" min="0" step="0.1">
+                <span class="time-stamp" id="durationTime">00:00</span>
+            </div>
+
+            <div class="modifier-rack">
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Volume</span>
+                        <span class="control-value" id="volumeVal">100%</span>
+                    </div>
+                    <input type="range" id="volumeSlider" class="glass-slider" min="0" max="1.5" step="0.05" value="1.0">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Audio Pitch</span>
+                        <span class="control-value" id="pitchVal">1.00x</span>
+                    </div>
+                    <input type="range" id="pitchSlider" class="glass-slider" min="0.5" max="2.0" step="0.05" value="1.0">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Playback Speed</span>
+                        <span class="control-value" id="speedVal">1.00x</span>
+                    </div>
+                    <input type="range" id="speedSlider" class="glass-slider" min="0.5" max="2.0" step="0.05" value="1.0">
+                </div>
+            </div>
+
+            <div class="controls-panel-row">
+                <button type="button" class="action-circle-btn" id="playPauseBtn" title="Play / Pause">
+                    <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="pauseIcon" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+            </div>
+
+            <div class="export-buttons-stack">
+                <button type="button" class="glass-btn" id="downloadMp3Btn">Export as MP3</button>
+                <button type="button" class="glass-btn" id="downloadWavBtn">Export as WAV</button>
+            </div>
+            
+            <div class="credit-wrapper">
+                <div class="credit-bubble">Designed and Developed by Debadatta Thakur</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Core Internal State Variables
+        let audioCtx = null;
+        let audioBuffer = null;
+        let originalSampleRate = 44100;
+        
+        let isPlaying = false;
+        let startTime = 0;       
+        let playOffset = 0;      
+        let animationFrameId = null;
+
+        // Web Audio Routing Reference Nodes
+        let currentSourceNode = null;
+        let currentGainNode = null;
+
+        // UI View Hook Assemblies
+        const audioFileInput = document.getElementById('audioFile');
+        const uploadLabel = document.getElementById('uploadLabel');
+        const trackBubbleWrapper = document.getElementById('trackBubbleWrapper');
+        const trackName = document.getElementById('trackName');
+        const studioContainer = document.getElementById('studioContainer');
+        const studioWorkspace = document.getElementById('studioWorkspace');
+        
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        
+        const seekBar = document.getElementById('seekBar');
+        const currentTimeText = document.getElementById('currentTime');
+        const durationTimeText = document.getElementById('durationTime');
+        
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeVal = document.getElementById('volumeVal');
+        const pitchSlider = document.getElementById('pitchSlider');
+        const pitchVal = document.getElementById('pitchVal');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedVal = document.getElementById('speedVal');
+        
+        const downloadMp3Btn = document.getElementById('downloadMp3Btn');
+        const downloadWavBtn = document.getElementById('downloadWavBtn');
+
+        // Capture User Import Target Signals
+        audioFileInput.addEventListener('change', parseInputAudioTrack);
+
+        function parseInputAudioTrack(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Reflect state text variables exactly matching criteria rules
+            uploadLabel.innerText = "Choose Again";
+            trackName.innerText = `Now Playing: ${file.name}`;
+            trackBubbleWrapper.style.display = "block";
+            
+            // Clean legacy ongoing tracking state maps
+            haltPlaybackEngine();
+            playOffset = 0;
+            seekBar.value = 0;
+            currentTimeText.innerText = "00:00";
+
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                audioCtx.decodeAudioData(evt.target.result, function(buffer) {
+                    audioBuffer = buffer;
+                    originalSampleRate = buffer.sampleRate;
+                    
+                    // Reveal functional UI elements
+                    studioWorkspace.classList.add('active');
+                    seekBar.max = audioBuffer.duration;
+                    durationTimeText.innerText = formatTimeDisplay(audioBuffer.duration);
+                }, function(err) {
+                    alert("Error decoding file format. Please upload a structured audio track.");
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- SCHEDULING CORE PLAYBACK LOGIC ENGINE ---
+        function livePlayEngine() {
+            if (!audioBuffer) return;
+
+            if (currentSourceNode) {
+                try { currentSourceNode.stop(); } catch(e) {}
+            }
+
+            // Instantiating independent nodes
+            currentSourceNode = audioCtx.createBufferSource();
+            currentGainNode = audioCtx.createGain();
+
+            currentSourceNode.buffer = audioBuffer;
+
+            // Extract Slider Values
+            const currentSpeed = parseFloat(speedSlider.value);
+            const currentPitch = parseFloat(pitchSlider.value);
+            const currentVolume = parseFloat(volumeSlider.value);
+
+            // Establish uniform speed configuration
+            currentSourceNode.playbackRate.value = currentSpeed;
+            
+            // Un-link Pitch modification via dynamic mathematical tracking cents offset
+            const compoundDetune = (currentPitch - currentSpeed) * 1200; 
+            currentSourceNode.detune.value = compoundDetune;
+
+            // Dynamic volume mapping connection layer
+            currentGainNode.gain.value = currentVolume;
+
+            // Connect signal route pipeline
+            currentSourceNode.connect(currentGainNode);
+            currentGainNode.connect(audioCtx.destination);
+
+            if (playOffset >= audioBuffer.duration) playOffset = 0;
+
+            startTime = audioCtx.currentTime;
+            currentSourceNode.start(0, playOffset);
+            
+            isPlaying = true;
+            togglePlayUIIconState(true);
+            studioContainer.classList.add('playing-glow');
+            
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(synchronizeTrackerTick);
+        }
+
+        function haltPlaybackEngine() {
+            if (currentSourceNode) {
+                try { currentSourceNode.stop(); } catch(e) {}
+                currentSourceNode = null;
+            }
+            isPlaying = false;
+            togglePlayUIIconState(false);
+            studioContainer.classList.remove('playing-glow');
+            cancelAnimationFrame(animationFrameId);
+        }
+
+        function togglePlayUIIconState(shouldShowPlaying) {
+            if (shouldShowPlaying) {
+                playIcon.style.display = "none";
+                pauseIcon.style.display = "block";
+            } else {
+                playIcon.style.display = "block";
+                pauseIcon.style.display = "none";
+            }
+        }
+
+        function synchronizeTrackerTick() {
+            if (!isPlaying || !audioBuffer) return;
+
+            const currentSpeed = parseFloat(speedSlider.value);
+            const elapsed = (audioCtx.currentTime - startTime) * currentSpeed;
+            const currentPos = playOffset + elapsed;
+
+            if (currentPos >= audioBuffer.duration) {
+                haltPlaybackEngine();
+                playOffset = 0;
+                seekBar.value = 0;
+                currentTimeText.innerText = "00:00";
+                return;
+            }
+
+            seekBar.value = currentPos;
+            currentTimeText.innerText = formatTimeDisplay(currentPos);
+            animationFrameId = requestAnimationFrame(synchronizeTrackerTick);
+        }
+
+        // --- INTERACTION ELEMENT ROUTINES ---
+        playPauseBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                const currentSpeed = parseFloat(speedSlider.value);
+                playOffset += (audioCtx.currentTime - startTime) * currentSpeed;
+                haltPlaybackEngine();
+            } else {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                livePlayEngine();
+            }
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            const level = parseFloat(e.target.value);
+            volumeVal.innerText = `${Math.round(level * 100)}%`;
+            if (currentGainNode && isPlaying) {
+                currentGainNode.gain.value = level;
+            }
+        });
+
+        speedSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value).toFixed(2);
+            speedVal.innerText = `${val}x`;
+            if (isPlaying) {
+                const oldSpeed = parseFloat(speedSlider.value);
+                playOffset += (audioCtx.currentTime - startTime) * oldSpeed; 
+                livePlayEngine();
+            }
+        });
+
+        pitchSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value).toFixed(2);
+            pitchVal.innerText = `${val}x`;
+            if (isPlaying) {
+                const currentSpeed = parseFloat(speedSlider.value);
+                playOffset += (audioCtx.currentTime - startTime) * currentSpeed;
+                livePlayEngine();
+            }
+        });
+
+        seekBar.addEventListener('input', (e) => {
+            const targetSeekPos = parseFloat(e.target.value);
+            currentTimeText.innerText = formatTimeDisplay(targetSeekPos);
+            if (isPlaying) {
+                playOffset = targetSeekPos;
+                livePlayEngine();
+            } else {
+                playOffset = targetSeekPos;
+            }
+        });
+
+        function formatTimeDisplay(secs) {
+            const m = Math.floor(secs / 60).toString().padStart(2, '0');
+            const s = Math.floor(secs % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // --- COMMON CORE RENDERING MATRIX ENGINE ---
+        async function runOfflineRenderPipeline() {
+            const speedFactor = parseFloat(speedSlider.value);
+            const pitchFactor = parseFloat(pitchSlider.value);
+            const volumeFactor = parseFloat(volumeSlider.value);
+
+            const renderDuration = audioBuffer.duration / speedFactor;
+            const targetSampleRate = originalSampleRate; 
+            const totalRenderedLength = Math.floor(renderDuration * targetSampleRate);
+
+            const offlineCtx = new OfflineAudioContext(
+                audioBuffer.numberOfChannels,
+                totalRenderedLength,
+                targetSampleRate
+            );
+
+            const bufferSource = offlineCtx.createBufferSource();
+            const gainNode = offlineCtx.createGain();
+
+            bufferSource.buffer = audioBuffer;
+            bufferSource.playbackRate.value = speedFactor;
+            
+            const compoundDetune = (pitchFactor - speedFactor) * 1200;
+            bufferSource.detune.value = compoundDetune;
+            gainNode.gain.value = volumeFactor;
+
+            bufferSource.connect(gainNode);
+            gainNode.connect(offlineCtx.destination);
+            bufferSource.start(0);
+
+            return await offlineCtx.startRendering();
+        }
+
+        function setButtonsProcessingState(isProcessing) {
+            if (isProcessing) {
+                downloadMp3Btn.disabled = true;
+                downloadWavBtn.disabled = true;
+                downloadMp3Btn.innerText = "Composing, please wait!";
+                downloadWavBtn.innerText = "Composing, please wait!";
+            } else {
+                downloadMp3Btn.disabled = false;
+                downloadWavBtn.disabled = false;
+                downloadMp3Btn.innerText = "Export as MP3";
+                downloadWavBtn.innerText = "Export as WAV";
+            }
+        }
+
+        // --- EXPORT AS MP3 TARGET SIGNAL HANDLER ---
+        downloadMp3Btn.addEventListener('click', async () => {
+            if (!audioBuffer) return;
+            setButtonsProcessingState(true);
+
+            try {
+                const renderedBuffer = await runOfflineRenderPipeline();
+                const mp3Blob = encodeAudioBufferToMp3(renderedBuffer);
+                
+                triggerBlobFileDownload(mp3Blob, `Nexus_Nightcore_${Date.now()}.mp3`);
+            } catch (err) {
+                alert("An extraction error occurred: " + err);
+            } finally {
+                setButtonsProcessingState(false);
+            }
+        });
+
+        // --- EXPORT AS WAV TARGET SIGNAL HANDLER ---
+        downloadWavBtn.addEventListener('click', async () => {
+            if (!audioBuffer) return;
+            setButtonsProcessingState(true);
+
+            try {
+                const renderedBuffer = await runOfflineRenderPipeline();
+                const wavBlob = buildWavContainerBlob(renderedBuffer);
+                
+                triggerBlobFileDownload(wavBlob, `Nexus_Nightcore_${Date.now()}.wav`);
+            } catch (err) {
+                alert("An extraction error occurred: " + err);
+            } finally {
+                setButtonsProcessingState(false);
+            }
+        });
+
+        function triggerBlobFileDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const exportAnchor = document.createElement('a');
+            exportAnchor.href = url;
+            exportAnchor.download = filename;
+            document.body.appendChild(exportAnchor);
+            exportAnchor.click();
+            
+            document.body.removeChild(exportAnchor);
+            URL.revokeObjectURL(url);
+        }
+
+        /* --- CLIENT-SIDE MP3 INTERLEAVE ENCODER CORE --- */
+        function encodeAudioBufferToMp3(audioBuf) {
+            const channels = audioBuf.numberOfChannels;
+            const sampleRate = audioBuf.sampleRate;
+            
+            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+            const mp3Data = [];
+            const sampleBlockSize = 1152; 
+            
+            if (channels === 2) {
+                const leftFloat = audioBuf.getChannelData(0);
+                const rightFloat = audioBuf.getChannelData(1);
+                
+                const leftInt16 = convertFloatToInt16(leftFloat);
+                const rightInt16 = convertFloatToInt16(rightFloat);
+                
+                for (let i = 0; i < leftInt16.length; i += sampleBlockSize) {
+                    const leftChunk = leftInt16.subarray(i, i + sampleBlockSize);
+                    const rightChunk = rightInt16.subarray(i, i + sampleBlockSize);
+                    const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(new Uint8Array(mp3buf));
+                    }
+                }
+            } else {
+                const monoFloat = audioBuf.getChannelData(0);
+                const monoInt16 = convertFloatToInt16(monoFloat);
+                
+                for (let i = 0; i < monoInt16.length; i += sampleBlockSize) {
+                    const chunk = monoInt16.subarray(i, i + sampleBlockSize);
+                    const mp3buf = mp3encoder.encodeBuffer(chunk);
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(new Uint8Array(mp3buf));
+                    }
+                }
+            }
+            
+            const endBuf = mp3encoder.flush();
+            if (endBuf.length > 0) {
+                mp3Data.push(new Uint8Array(endBuf));
+            }
+            
+            return new Blob(mp3Data, { type: 'audio/mp3' });
+        }
+
+        /* --- RIFF WAV PACKAGING PIPELINE --- */
+        function buildWavContainerBlob(audioBuf) {
+            const numChannels = audioBuf.numberOfChannels;
+            const sampleRate = audioBuf.sampleRate;
+            const format = 1; 
+            const bitDepth = 16;
+            
+            let result;
+            if (numChannels === 2) {
+                result = interleaveStereoChannels(audioBuf.getChannelData(0), audioBuf.getChannelData(1));
+            } else {
+                result = audioBuf.getChannelData(0);
+            }
+            
+            const buffer = new ArrayBuffer(44 + result.length * 2);
+            const view = new DataView(buffer);
+            
+            writeStringBytes(view, 0, 'RIFF');
+            view.setUint32(4, 36 + result.length * 2, true);
+            writeStringBytes(view, 8, 'WAVE');
+            writeStringBytes(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+            view.setUint16(32, numChannels * (bitDepth / 8), true);
+            view.setUint16(34, bitDepth, true);
+            writeStringBytes(view, 36, 'data');
+            view.setUint32(40, result.length * 2, true);
+            
+            for (let i = 0; i < result.length; i++) {
+                let offset = 44 + i * 2;
+                let s = Math.max(-1, Math.min(1, result[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+            
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function interleaveStereoChannels(inputL, inputR) {
+            const length = inputL.length + inputR.length;
+            const product = new Float32Array(length);
+            let index = 0, inputIndex = 0;
+            while (index < length) {
+                product[index++] = inputL[inputIndex];
+                product[index++] = inputR[inputIndex];
+                inputIndex++;
+            }
+            return product;
+        }
+
+        function convertFloatToInt16(float32Array) {
+            const int16Array = new Int16Array(float32Array.length);
+            for (let i = 0; i < float32Array.length; i++) {
+                let s = Math.max(-1, Math.min(1, float32Array[i]));
+                int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            return int16Array;
+        }
+
+        function writeStringBytes(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+    </script>
+</body>
+</html>
